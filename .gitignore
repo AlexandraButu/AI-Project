@@ -1,0 +1,14 @@
+# Exclude bin and obj folders
+bin/
+obj/
+
+# Exclude Visual Studio temporary files
+.vs/
+*.suo
+*.user
+
+# Exclude build outputs
+*.exe
+*.dll
+*.pdb
+*.cache
