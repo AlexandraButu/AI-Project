@@ -79,7 +79,7 @@
             }
 
          
-            labelStatus.Text = "Joc nou inceput! Raspundeti la intrebari";
+            labelStatus.Text = "Joc nou inceput!? Raspundeti la intrebari";
         }
 
 
