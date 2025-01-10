@@ -51,6 +51,8 @@
             iesireToolStripMenuItem = new ToolStripMenuItem();
             labelPlayerScore = new Label();
             labelComputerScore = new Label();
+            comboBoxIntrebari = new ComboBox();
+            labelNume = new Label();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)characterPictureBox).BeginInit();
@@ -130,7 +132,7 @@
             // yesButton
             // 
             yesButton.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            yesButton.Location = new Point(69, 702);
+            yesButton.Location = new Point(66, 734);
             yesButton.Name = "yesButton";
             yesButton.Size = new Size(122, 51);
             yesButton.TabIndex = 2;
@@ -141,9 +143,9 @@
             // noButton
             // 
             noButton.Font = new Font("Segoe UI", 11F);
-            noButton.Location = new Point(215, 702);
+            noButton.Location = new Point(222, 734);
             noButton.Name = "noButton";
-            noButton.Size = new Size(137, 51);
+            noButton.Size = new Size(122, 51);
             noButton.TabIndex = 3;
             noButton.Text = "Nu";
             noButton.UseVisualStyleBackColor = true;
@@ -170,7 +172,7 @@
             // 
             // buttonReset
             // 
-            buttonReset.Location = new Point(1335, 720);
+            buttonReset.Location = new Point(1335, 825);
             buttonReset.Name = "buttonReset";
             buttonReset.Size = new Size(142, 46);
             buttonReset.TabIndex = 6;
@@ -192,7 +194,7 @@
             // 
             characterPictureBox.Location = new Point(1275, 459);
             characterPictureBox.Name = "characterPictureBox";
-            characterPictureBox.Size = new Size(181, 179);
+            characterPictureBox.Size = new Size(202, 198);
             characterPictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
             characterPictureBox.TabIndex = 8;
             characterPictureBox.TabStop = false;
@@ -213,7 +215,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { fisierToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1518, 33);
+            menuStrip1.Size = new Size(1772, 33);
             menuStrip1.TabIndex = 10;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -255,11 +257,30 @@
             labelComputerScore.TabIndex = 12;
             labelComputerScore.Text = "Scor calculator";
             // 
+            // comboBoxIntrebari
+            // 
+            comboBoxIntrebari.FormattingEnabled = true;
+            comboBoxIntrebari.Location = new Point(200, 628);
+            comboBoxIntrebari.Name = "comboBoxIntrebari";
+            comboBoxIntrebari.Size = new Size(220, 33);
+            comboBoxIntrebari.TabIndex = 14;
+            // 
+            // labelNume
+            // 
+            labelNume.AutoSize = true;
+            labelNume.Location = new Point(1312, 698);
+            labelNume.Name = "labelNume";
+            labelNume.Size = new Size(64, 25);
+            labelNume.TabIndex = 15;
+            labelNume.Text = "Nume:";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1518, 802);
+            ClientSize = new Size(1772, 1140);
+            Controls.Add(labelNume);
+            Controls.Add(comboBoxIntrebari);
             Controls.Add(labelComputerScore);
             Controls.Add(labelPlayerScore);
             Controls.Add(labelPersonaj);
@@ -311,5 +332,7 @@
         private ToolStripMenuItem iesireToolStripMenuItem;
         private Label labelPlayerScore;
         private Label labelComputerScore;
+        private ComboBox comboBoxIntrebari;
+        private Label labelNume;
     }
 }

@@ -22,6 +22,7 @@
         //https://www.printablee.com/postpic/2013/12/hasbro-guess-who-character-sheets_214355.jpg - personaje
 
    
+
         private void StartJocNou()
         {
             //Lista de personaje
@@ -38,7 +39,7 @@
                 new Character("Michael", "M", "Negru", true, false, true, "Tanar", "Images/michael.png"),
                 new Character("Olivia", "F", "Negru", false, false, false, "Matur", "Images/olivia.png"),
                 new Character("Joseph", "M", "Blond", true, true, false, "Tanar", "Images/joseph.png"),
-                new Character("Sarah", "F", "Castaniu", false, false, false, "TâTanarnăr", "Images/sarah.png")
+                new Character("Sarah", "F", "Castaniu", false, false, false, "Tanar", "Images/sarah.png")
             };
 
             //Lista de intrebari disponibile
@@ -79,6 +80,65 @@
 
          
             labelStatus.Text = "Joc nou inceput! Raspundeti la intrebari";
+        }
+
+
+
+        private void ProcessQuestion(string question, bool answer)
+        {
+            if (gameState == null) 
+                return;
+
+            var remaining = new List<Character>();
+
+            foreach (var character in gameState.RemainingCharacters)
+            {
+                if (answer)
+                {
+                    if (CharacterMatchesQuestion(character, question))
+                        remaining.Add(character);
+                }
+                else
+                {
+                    if (!CharacterMatchesQuestion(character, question))
+                        remaining.Add(character);
+                }
+            }
+
+            gameState.RemainingCharacters = remaining;
+            LoadCharactersIntoGrid();
+        }
+
+        private bool CharacterMatchesQuestion(Character character, string question)
+        {
+            
+            switch (question)
+            {
+                case "Personajul are par blond?":
+                    return character.HairColor == "Blond";
+                case "Personajul are par negru?":
+                    return character.HairColor == "Negru";
+                case "Personajul are par castaniu?":
+                    return character.HairColor == "Castaniu";
+                case "Personajul are barba sau mustata?":
+                    return character.HasBeardOrMustache;
+                case "Personajul este femeie?":
+                    return character.Gender == "F";
+                case "Personajul este barbat?":
+                    return character.Gender == "M";
+                case "Personajul are palarie?":
+                    return character.WearsHat;
+                case "Personajul este tanar?":
+                    return character.EstimatedAge == "Tanar";
+                case "Personajul este matur?":
+                    return character.EstimatedAge == "Matur";
+                case "Personajul este senior?":
+                    return character.EstimatedAge == "Senior";
+                case "Personajul poartă ochelari?":
+                    return character.HasGlasses;
+                default:
+                    return false;
+            }
         }
 
 
@@ -128,11 +188,22 @@
         }
         private void yesButton_Click(object sender, EventArgs e)
         {
+           
+                if (comboBoxIntrebari.SelectedItem != null)
+                {
+                    string selectedQuestion = comboBoxIntrebari.SelectedItem.ToString();
+                    ProcessQuestion(selectedQuestion, true);
+                }
+            
         }
 
         private void noButton_Click(object sender, EventArgs e)
         {
-          
+            if (comboBoxIntrebari.SelectedItem != null)
+            {
+                string selectedQuestion = comboBoxIntrebari.SelectedItem.ToString();
+                ProcessQuestion(selectedQuestion, false);
+            }
         }
 
 
