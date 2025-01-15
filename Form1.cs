@@ -2,14 +2,13 @@
 {
     public partial class Form1 : Form
     {
-        private int playerScore = 0;
-        private int computerScore = 0;
-        private Character? computerTargetCharacter;
         private Character? playerTargetCharacter;
 
-        private GameState? gameState;
-        private Character? targetCharacter;
-        private MCTS? mcts;
+
+        private GameState? gameStatePlayer; // Permite null
+        private GameState? gameStateComputer; // Permite null
+        private MCTS? mcts; // Variabila pentru instanta MCTS
+        private bool isComputerTurn = false;
 
         private List<Character> characters = new List<Character>();
         private System.Windows.Forms.Timer statusTimer = new System.Windows.Forms.Timer();
@@ -20,100 +19,100 @@
         {
             InitializeComponent();
 
-
+            // Conectează evenimentul CellClick la metoda dataGridView1_CellClick
             dataGridView1.CellClick += new DataGridViewCellEventHandler(dataGridView1_CellClick);
 
+            // Initializeaza starea jocului
+            gameStatePlayer = new GameState(new List<Character>(), new List<string>());
+            gameStateComputer = new GameState(new List<Character>(), new List<string>());
 
-            gameState = new GameState(new List<Character>(), new List<string>());
-
-
+            // Initializeaza Timer-ul pentru coada de status
             InitializeStatusTimer();
         }
 
 
-
-
         private void StartJocNou()
         {
-
+            // Lista de personaje
             characters = new List<Character>
-    {
-        new Character("Alex", "M", "Negru", true, true, false, "Tanăr", "Images/alex.png"),
-        new Character("Carol", "F", "Blond", false, false, false, "Senior", "Images/carol.png"),
-        new Character("Daniel", "M", "Castaniu", false, false, true, "Senior", "Images/daniel.png"),
-        new Character("David", "M", "Negru", false, true, true, "Matur", "Images/david.png"),
-        new Character("Dorothy", "F", "Negru", false, true, false, "Tanar", "Images/dorothy.png"),
-        new Character("Evelyn", "F", "Negru", true, false, false, "Tanar", "Images/evelyn.png"),
-        new Character("Karen", "F", "Negru", false, true, false, "Tanar", "Images/karen.png"),
-        new Character("Mary", "F", "Blond", false, true, false, "Tanar", "Images/mary.png"),
-        new Character("Michael", "M", "Negru", true, false, true, "Tanar", "Images/michael.png"),
-        new Character("Olivia", "F", "Negru", false, false, false, "Matur", "Images/olivia.png"),
-        new Character("Joseph", "M", "Blond", true, true, false, "Tanar", "Images/joseph.png"),
-        new Character("Sarah", "F", "Castaniu", false, false, false, "Tanar", "Images/sarah.png")
-    };
+            {
+                new Character("Alex", "M", "Negru", true, true, false, "Tanăr", "Images/alex.png"),
+                new Character("Carol", "F", "Blond", false, false, false, "Senior", "Images/carol.png"),
+                new Character("Daniel", "M", "Castaniu", false, false, true, "Senior", "Images/daniel.png"),
+                new Character("David", "M", "Negru", false, true, true, "Matur", "Images/david.png"),
+                new Character("Dorothy", "F", "Negru", false, true, false, "Tanar", "Images/dorothy.png"),
+                new Character("Evelyn", "F", "Negru", true, false, false, "Tanar", "Images/evelyn.png"),
+                new Character("Karen", "F", "Negru", false, true, false, "Tanar", "Images/karen.png"),
+                new Character("Mary", "F", "Blond", false, true, false, "Tanar", "Images/mary.png"),
+                new Character("Michael", "M", "Negru", true, false, true, "Tanar", "Images/michael.png"),
+                new Character("Olivia", "F", "Negru", false, false, false, "Matur", "Images/olivia.png"),
+                new Character("Joseph", "M", "Blond", true, true, false, "Tanar", "Images/joseph.png"),
+                new Character("Sarah", "F", "Castaniu", false, false, false, "Tanar", "Images/sarah.png")
+            };
 
-
+            // Lista de întrebari disponibile
             List<string> questions = new List<string>
-    {
-        "Personajul are par blond?",
-        "Personajul are par negru?",
-        "Personajul are par castaniu?",
-        "Personajul are barba sau mustata?",
-        "Personajul este femeie?",
-        "Personajul este barbat?",
-        "Personajul are palarie?",
-        "Personajul este tanar?",
-        "Personajul este matur?",
-        "Personajul este senior?",
-        "Personajul poartă ochelari?",
-    };
+            {
+                "Personajul are par blond?",
+                "Personajul are par negru?",
+                "Personajul are par castaniu?",
+                "Personajul are barba sau mustata?",
+                "Personajul este femeie?",
+                "Personajul este barbat?",
+                "Personajul are palarie?",
+                "Personajul este tanar?",
+                "Personajul este matur?",
+                "Personajul este senior?",
+                "Personajul poartă ochelari?",
+            };
 
-
-            gameState = new GameState(characters, questions);
+            // Initializeaza gameState
+            gameStatePlayer = new GameState(characters, questions);
+            gameStateComputer = new GameState(characters, questions);
 
             Random random = new Random();
 
+            // Alege personajul calculatorului random
 
-            computerTargetCharacter = characters[random.Next(characters.Count)];
+            gameStateComputer.SelectedCharacter = characters[random.Next(characters.Count)];
 
-
-            gameState.RemainingCharacters = new List<Character>(characters);
-
-
+            // Incarca personajele în grid
             LoadCharactersIntoGrid();
 
-
+            // Populateaza ComboBox
             UpdateComboBoxQuestions();
 
+            // Instantiaza MCTS
+            mcts = new MCTS(gameStateComputer, (int)numericUpDown1.Value);
 
-            mcts = new MCTS(gameState);
-
-
+            // Actualizează statusul
             labelStatus.Text = "Selectați un personaj din grid pentru a începe jocul!";
+            dataGridView1.Enabled = true;
+            yesButton.Enabled = false;
+            noButton.Enabled = false;
+            comboBoxIntrebari.Enabled = false;
+            isComputerTurn = false;
         }
 
 
         private void InitializeStatusTimer()
         {
-            statusTimer.Interval = 2000; // 2 secunde
+            statusTimer.Interval = 1000; // 2 secunde
             statusTimer.Tick += StatusTimer_Tick;
         }
-
 
         private void StatusTimer_Tick(object sender, EventArgs e)
         {
             if (statusQueue.Count > 0)
             {
                 string nextStatus = statusQueue.Dequeue();
-                labelStatus.Text = nextStatus;
+                labelStatus.Text = nextStatus; // Actualizeaza statusul pe ecran
             }
             else
             {
-                statusTimer.Stop();
+                statusTimer.Stop(); // Opreste timer-ul daca coada este goală
             }
         }
-
-
 
         private void AddToStatusQueue(string status)
         {

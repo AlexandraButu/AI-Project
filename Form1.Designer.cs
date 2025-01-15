@@ -49,10 +49,8 @@
             fisierToolStripMenuItem = new ToolStripMenuItem();
             startJocNouToolStripMenuItem = new ToolStripMenuItem();
             iesireToolStripMenuItem = new ToolStripMenuItem();
-            labelPlayerScore = new Label();
-            labelComputerScore = new Label();
             comboBoxIntrebari = new ComboBox();
-            labelNume = new Label();
+            labelNumePersonaj = new Label();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numericUpDown1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)characterPictureBox).BeginInit();
@@ -163,21 +161,22 @@
             // numericUpDown1
             // 
             numericUpDown1.Location = new Point(1238, 122);
-            numericUpDown1.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            numericUpDown1.Maximum = new decimal(new int[] { 10000000, 0, 0, 0 });
             numericUpDown1.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
             numericUpDown1.Name = "numericUpDown1";
             numericUpDown1.Size = new Size(180, 31);
             numericUpDown1.TabIndex = 5;
-            numericUpDown1.Value = new decimal(new int[] { 10, 0, 0, 0 });
+            numericUpDown1.Value = new decimal(new int[] { 1000, 0, 0, 0 });
             // 
             // buttonReset
             // 
-            buttonReset.Location = new Point(1335, 825);
+            buttonReset.Location = new Point(759, 737);
             buttonReset.Name = "buttonReset";
             buttonReset.Size = new Size(142, 46);
             buttonReset.TabIndex = 6;
             buttonReset.Text = "Resetare joc";
             buttonReset.UseVisualStyleBackColor = true;
+            buttonReset.Click += buttonReset_Click;
             // 
             // labelStatus
             // 
@@ -192,7 +191,7 @@
             // 
             // characterPictureBox
             // 
-            characterPictureBox.Location = new Point(1275, 459);
+            characterPictureBox.Location = new Point(1275, 315);
             characterPictureBox.Name = "characterPictureBox";
             characterPictureBox.Size = new Size(202, 198);
             characterPictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -203,7 +202,7 @@
             // labelPersonaj
             // 
             labelPersonaj.AutoSize = true;
-            labelPersonaj.Location = new Point(1317, 408);
+            labelPersonaj.Location = new Point(1285, 268);
             labelPersonaj.Name = "labelPersonaj";
             labelPersonaj.Size = new Size(87, 25);
             labelPersonaj.TabIndex = 9;
@@ -215,7 +214,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { fisierToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1772, 33);
+            menuStrip1.Size = new Size(1547, 33);
             menuStrip1.TabIndex = 10;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -239,24 +238,6 @@
             iesireToolStripMenuItem.Size = new Size(219, 34);
             iesireToolStripMenuItem.Text = "Iesire";
             // 
-            // labelPlayerScore
-            // 
-            labelPlayerScore.AutoSize = true;
-            labelPlayerScore.Location = new Point(639, 720);
-            labelPlayerScore.Name = "labelPlayerScore";
-            labelPlayerScore.Size = new Size(106, 25);
-            labelPlayerScore.TabIndex = 11;
-            labelPlayerScore.Text = "Scor jucator";
-            // 
-            // labelComputerScore
-            // 
-            labelComputerScore.AutoSize = true;
-            labelComputerScore.Location = new Point(817, 720);
-            labelComputerScore.Name = "labelComputerScore";
-            labelComputerScore.Size = new Size(127, 25);
-            labelComputerScore.TabIndex = 12;
-            labelComputerScore.Text = "Scor calculator";
-            // 
             // comboBoxIntrebari
             // 
             comboBoxIntrebari.FormattingEnabled = true;
@@ -264,25 +245,24 @@
             comboBoxIntrebari.Name = "comboBoxIntrebari";
             comboBoxIntrebari.Size = new Size(220, 33);
             comboBoxIntrebari.TabIndex = 14;
+            comboBoxIntrebari.SelectedIndexChanged += comboBoxIntrebari_SelectedIndexChanged;
             // 
-            // labelNume
+            // labelNumePersonaj
             // 
-            labelNume.AutoSize = true;
-            labelNume.Location = new Point(1312, 698);
-            labelNume.Name = "labelNume";
-            labelNume.Size = new Size(64, 25);
-            labelNume.TabIndex = 15;
-            labelNume.Text = "Nume:";
+            labelNumePersonaj.AutoSize = true;
+            labelNumePersonaj.Location = new Point(1285, 541);
+            labelNumePersonaj.Name = "labelNumePersonaj";
+            labelNumePersonaj.Size = new Size(64, 25);
+            labelNumePersonaj.TabIndex = 15;
+            labelNumePersonaj.Text = "Nume:";
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1772, 1140);
-            Controls.Add(labelNume);
+            ClientSize = new Size(1547, 837);
+            Controls.Add(labelNumePersonaj);
             Controls.Add(comboBoxIntrebari);
-            Controls.Add(labelComputerScore);
-            Controls.Add(labelPlayerScore);
             Controls.Add(labelPersonaj);
             Controls.Add(characterPictureBox);
             Controls.Add(labelStatus);
@@ -330,9 +310,7 @@
         private ToolStripMenuItem fisierToolStripMenuItem;
         private ToolStripMenuItem startJocNouToolStripMenuItem;
         private ToolStripMenuItem iesireToolStripMenuItem;
-        private Label labelPlayerScore;
-        private Label labelComputerScore;
         private ComboBox comboBoxIntrebari;
-        private Label labelNume;
+        private Label labelNumePersonaj;
     }
 }
