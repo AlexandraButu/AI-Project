@@ -8,40 +8,48 @@ namespace ProiectIA
 {
     public class GameState
     {
-        public List<Character> RemainingCharacters { get; set; }
+        public List<Character> AllCharacters { get; set; }
+        public List<Character> remainingCharacters { get; set; }
         public List<string> AvailableQuestions { get; set; }
         public List<string> AskedQuestions { get; set; }
+        public Character SelectedCharacter { get; set; }
 
         public GameState(List<Character> characters, List<string> questions)
         {
-            RemainingCharacters = new List<Character>(characters); 
+            AllCharacters = new List<Character>(characters);
+            remainingCharacters = new List<Character>(characters);
             AvailableQuestions = new List<string>(questions);
+            AskedQuestions = new List<string>();
         }
 
         public void RemoveQuestion(string question)
         {
+            // Verifica daca intrebarea se afla in lista de intrebari disponibile
             if (AvailableQuestions.Contains(question))
-            {
+            { // Elimina intrebarea din lista intrebarilor disponibile
                 AvailableQuestions.Remove(question);
+                // Adauga intrebarea eliminata in lista de intrebari deja adresate
                 AskedQuestions.Add(question);
             }
         }
 
-        public void UpdateRemainingCharacters(Func<Character, bool> predicate)
+        public void UpdateRemainingCharacters(string question, bool answer)
         {
-            RemainingCharacters = RemainingCharacters.Where(predicate).ToList();
+            // Filtreaza personajele ramase pastrand doar cele care corespund raspunsului la intrebare
+            remainingCharacters = remainingCharacters.Where(character => character.CharacterMatchesQuestion(question) == answer).ToList();
         }
 
         public void Reset(List<Character> characters, List<string> questions)
         {
-            RemainingCharacters = new List<Character>(characters);
+            AllCharacters = new List<Character>(characters);
+            remainingCharacters = new List<Character>(characters);
             AvailableQuestions = new List<string>(questions);
             AskedQuestions.Clear();
         }
 
         public bool IsGameOver()
         {
-            return RemainingCharacters.Count <= 1;
+            return remainingCharacters.Count <= 1;
         }
     }
 
