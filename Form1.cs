@@ -1,12 +1,12 @@
-﻿namespace ProiectIA
+namespace ProiectIA
 {
     public partial class Form1 : Form
     {
         private Character? playerTargetCharacter;
 
 
-        private GameState? gameStatePlayer; 
-        private GameState? gameStateComputer; 
+        private GameState? gameStatePlayer;
+        private GameState? gameStateComputer;
         private MCTS? mcts;
         private bool isComputerTurn = false;
 
@@ -98,14 +98,22 @@
             }
             else
             {
-                statusTimer.Stop(); 
+                statusTimer.Stop();
+            }
+        }
+        private void AddToStatusQueue(string status)
+        {
+            statusQueue.Enqueue(status); 
+            if (!statusTimer.Enabled)
+            {
+                statusTimer.Start();
             }
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0 &&
-                e.RowIndex < gameStatePlayer?.remainingCharacters.Count) 
+                e.RowIndex < gameStatePlayer?.remainingCharacters.Count)
             {
                 playerTargetCharacter = gameStatePlayer.remainingCharacters[e.RowIndex];
                 gameStatePlayer.SelectedCharacter = playerTargetCharacter;
@@ -179,7 +187,7 @@
         private bool GetPlayerResponse(string question)
         {
             if (playerTargetCharacter == null)
-                return false; 
+                return false;
 
             return playerTargetCharacter.CharacterMatchesQuestion(question);
         }
@@ -188,7 +196,7 @@
         private void EnableAnswerButtons(string question)
         {
             yesButton.Tag = question;
-            noButton.Tag = question; 
+            noButton.Tag = question;
 
             yesButton.Enabled = true;
             noButton.Enabled = true;
@@ -214,7 +222,7 @@
             else
             {
                 AddToStatusQueue("Calculatorul nu stie ce sa intrebe.");
-                EndComputerTurn(); 
+                EndComputerTurn();
             }
         }
 
@@ -250,32 +258,32 @@
 
         private bool CheckGameOver()
         {
-            if (gameState.RemainingCharacters.Count == 1 && playerTargetCharacter != null)
+            if (gameStatePlayer == null || gameStateComputer == null) return false;
+
+            if (gameStatePlayer.remainingCharacters.Count == 1)
             {
-                var remainingCharacter = gameState.RemainingCharacters.First();
-                if (remainingCharacter.Name == playerTargetCharacter.Name)
+                if (gameStatePlayer.remainingCharacters.First().Name == gameStateComputer.SelectedCharacter.Name)
                 {
-                    MessageBox.Show("Calculatorul a câștigat! Personajul tău a fost ghicit.", "Joc Terminat");
-                    labelStatus.Text = $"Joc încheiat! Câștigătorul este: Calculatorul. Personajul tău a fost: {playerTargetCharacter.Name}.";
+                    MessageBox.Show("Ai câștigat!", "Joc Terminat");
+                    AddToStatusQueue($"Aia ghicit: {gameStateComputer.SelectedCharacter.Name}. Ai Castigat.");
                     return true;
                 }
             }
 
-            if (gameState.RemainingCharacters.Count == 1 && computerTargetCharacter != null)
+            if (gameStateComputer.remainingCharacters.Count == 1)
             {
-                var remainingCharacter = gameState.RemainingCharacters.First();
-                if (remainingCharacter.Name == computerTargetCharacter.Name)
+                if (gameStateComputer.remainingCharacters.First().Name == gameStatePlayer.SelectedCharacter.Name)
                 {
-                    MessageBox.Show("Ai câștigat! Ai ghicit personajul calculatorului.", "Joc Terminat");
-                    labelStatus.Text = $"Joc încheiat! Câștigătorul este: Jucătorul uman. Personajul calculatorului a fost: {computerTargetCharacter.Name}.";
+                    MessageBox.Show("Ai pierdut!", "Joc Terminat");
+                    AddToStatusQueue($"Calculatorul a ghicit: {gameStatePlayer.SelectedCharacter.Name}. Ai pierdut!");
                     return true;
                 }
             }
 
-            if (gameState.RemainingCharacters.Count == 0)
+            if (gameStatePlayer.remainingCharacters.Count == 0 || gameStateComputer.remainingCharacters.Count == 0)
             {
-                MessageBox.Show("Joc încheiat! Nu au mai rămas personaje în lista de joc.", "Joc Terminat");
-                labelStatus.Text = "Joc încheiat! Nu au mai rămas personaje în lista.";
+                MessageBox.Show("Joc încheiat! Nu au mai rămas personaje posibile.", "Joc Terminat");
+                AddToStatusQueue("Joc încheiat! Nu au mai rămas personaje posibile.");
                 return true;
             }
 
@@ -286,32 +294,26 @@
         private void UpdateComboBoxQuestions()
         {
             comboBoxIntrebari.Items.Clear();
-            foreach (var question in gameState.AvailableQuestions)
+            foreach (var question in gameStatePlayer?.AvailableQuestions ?? new List<string>())
             {
                 comboBoxIntrebari.Items.Add(question);
             }
+
             comboBoxIntrebari.SelectedIndex = -1;
         }
 
 
         private void yesButton_Click(object sender, EventArgs e)
         {
+            if (!isComputerTurn) return;
+
             string question = yesButton.Tag.ToString();
+            bool isAnswerCorrect = gameStatePlayer.SelectedCharacter.CharacterMatchesQuestion(question);
+            ProcessQuestion(question, isAnswerCorrect, false);
+            EndComputerTurn();
 
-            bool isAnswerCorrect = CharacterMatchesQuestion(playerTargetCharacter, question);
-
-            ProcessQuestion(question, isAnswerCorrect);
-
-            int charactersEliminated = gameState.RemainingCharacters.Count;
-
-            if (isAnswerCorrect)
-            {
-                labelStatus.Text = $"Întrebarea a fost bună, s-au eliminat {charactersEliminated} personaje din grilă.";
-            }
-            else
-            {
-                labelStatus.Text = "Întrebarea nu a fost bună, nu s-a eliminat niciun personaj.";
-            }
+            Console.WriteLine(question + " " + isAnswerCorrect);
+            gameStateComputer.remainingCharacters.ForEach(character => Console.WriteLine(character.Name));
 
             yesButton.Enabled = false;
             noButton.Enabled = false;
@@ -320,38 +322,38 @@
 
             AddToStatusQueue("Jucătorul uman trebuie să aleagă o întrebare.");
         }
-
 
 
         private void noButton_Click(object sender, EventArgs e)
         {
+            if (!isComputerTurn) return;
+
             string question = noButton.Tag.ToString();
+            bool isAnswerCorrect = gameStatePlayer.SelectedCharacter.CharacterMatchesQuestion(question);
+            ProcessQuestion(question, isAnswerCorrect, false);
+            EndComputerTurn();
+            Console.WriteLine(question + " " + isAnswerCorrect);
+            gameStateComputer.remainingCharacters.ForEach(character => Console.WriteLine(character.Name));
 
-            bool isAnswerCorrect = !CharacterMatchesQuestion(playerTargetCharacter, question);
-
-            ProcessQuestion(question, isAnswerCorrect);
-
-            int charactersEliminated = gameState.RemainingCharacters.Count;
-
-            if (isAnswerCorrect)
-            {
-                labelStatus.Text = $"Întrebarea a fost bună, s-au eliminat {charactersEliminated} personaje din grilă.";
-            }
-            else
-            {
-                labelStatus.Text = "Întrebarea nu a fost bună, nu s-a eliminat niciun personaj.";
-            }
 
             yesButton.Enabled = false;
             noButton.Enabled = false;
 
             if (CheckGameOver()) return;
 
-
             AddToStatusQueue("Jucătorul uman trebuie să aleagă o întrebare.");
         }
 
-
+        private void EndComputerTurn()
+        {
+            yesButton.Enabled = false;
+            noButton.Enabled = false;
+            isComputerTurn = false;
+            comboBoxIntrebari.Enabled = true;
+            if (CheckGameOver()) return;
+            AddToStatusQueue("Este rândul tău să alegi o întrebare.");
+            // labelStatus.Text = "Este rândul tău să alegi o întrebare.";
+        }
 
 
         private void startJocNouToolStripMenuItem_Click(object sender, EventArgs e)
@@ -362,56 +364,53 @@
 
         private void labelStatus_Click(object sender, EventArgs e)
         {
-
         }
 
         private void comboBoxIntrebari_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (comboBoxIntrebari.SelectedItem == null || computerTargetCharacter == null)
+            if (!comboBoxIntrebari.Enabled || comboBoxIntrebari.SelectedItem == null || gameStateComputer.SelectedCharacter == null)
             {
-                MessageBox.Show("Vă rugăm să selectați o întrebare validă.", "Eroare");
+                MessageBox.Show("Va rugam sa selectati o intrebare valida.", "Eroare");
                 return;
             }
-
             string selectedQuestion = comboBoxIntrebari.SelectedItem.ToString();
-            labelStatus.Text = $"Jucătorul a selectat întrebarea: {selectedQuestion}";
+            AddToStatusQueue($"Ai intrebat: {selectedQuestion}");
 
-            bool isAnswerCorrect = CharacterMatchesQuestion(computerTargetCharacter, selectedQuestion);
+            bool isAnswerCorrect = gameStateComputer.SelectedCharacter.CharacterMatchesQuestion(selectedQuestion);
 
-            int charactersBefore = gameState.RemainingCharacters.Count;
+            int charactersBefore = gameStatePlayer?.remainingCharacters.Count ?? 0;
 
-            ProcessQuestion(selectedQuestion, isAnswerCorrect);
+            ProcessQuestion(selectedQuestion, isAnswerCorrect, true);
 
-            int charactersAfter = gameState.RemainingCharacters.Count;
+            int charactersAfter = gameStatePlayer?.remainingCharacters.Count ?? 0;
             int charactersEliminated = charactersBefore - charactersAfter;
 
-            if (isAnswerCorrect)
-            {
-                AddToStatusQueue($"Întrebarea a fost bună, s-au eliminat {charactersEliminated} personaje din grilă.");
-            }
-            else
-            {
-                AddToStatusQueue("Întrebarea nu a fost bună, nu s-a eliminat niciun personaj.");
-            }
+            AddToStatusQueue(isAnswerCorrect
+                ? $"Raspunsul este Da. Au ramas {charactersEliminated} personaje."
+                : $"Rspunsul este Nu. Au ramas {charactersEliminated} personaje.");
 
-            gameState.RemoveQuestion(selectedQuestion);
+            gameStatePlayer?.RemoveQuestion(selectedQuestion);
             UpdateComboBoxQuestions();
 
             if (CheckGameOver()) return;
 
-            AddToStatusQueue("Calculatorul a ales întrebarea.");
-            statusTimer.Tick += (s, ev) => ComputerTurn();
-            statusTimer.Start();
+            comboBoxIntrebari.Enabled = false;
+
+            AddToStatusQueue("Calculatorul a ales intrebarea.");
+            ComputerTurn();
         }
 
 
         private void buttonReset_Click(object sender, EventArgs e)
         {
             ResetGame();
-            StartJocNou();
-            labelStatus.Text = "Jocul a fost resetat și un joc nou a început!";
+            StartJocNou(); 
+            labelStatus.Text = "Jocul a fost resetat si un joc nou a inceput!";
         }
 
+        private void labelPlayerScore_Click(object sender, EventArgs e)
+        {
 
+        }
     }
 }
