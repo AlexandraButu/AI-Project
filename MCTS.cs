@@ -96,4 +96,57 @@ namespace ProiectIA
             }
         } 
     }
+
+    public class MCTSNode
+    {
+        public GameState GameState { get; set; }
+        public MCTSNode Parent { get; set; }
+        public List<MCTSNode> Children { get; set; }
+        public string Question { get; set; }
+        public bool? Answer { get; set; }
+        public int VisitCount { get; set; }
+        public int WinCount { get; set; }
+        public List<string> UntriedQuestions { get; set; }
+
+        public MCTSNode(GameState gameState)
+        {
+            GameState = gameState;
+            Children = new List<MCTSNode>();
+            VisitCount = 0;
+            WinCount = 0;
+            UntriedQuestions = new List<string>(gameState.AvailableQuestions);
+        }
+
+        public void AddChild(MCTSNode child)
+        {
+            Children.Add(child);
+        }
+
+        public double WinRate => VisitCount == 0 ? 0 : (double)WinCount / VisitCount;
+        public bool IsNotFullySimulated => UntriedQuestions.Any();
+        public bool IsTerminalState => GameState.IsGameOver();
+    }
+
+    public static class UCT
+    {
+        public static double UCBValue(MCTSNode parent, MCTSNode child)
+        {
+            // Daca nodul curent nu a fost explorat deloc, se intoarce o valoare infinita
+            // pentru a favoriza explorarea acestuia
+            if (child.VisitCount == 0)
+                return double.MaxValue;
+
+            // Calculul formulei UCB:
+            // (WinCount / VisitCount) -> Exploatare: media castigurilor pentru nodul curent
+            // Math.Sqrt(2 * Math.Log(parent.VisitCount) / child.VisitCount) -> Explorare: 
+            // masoara cat de putin explorat este nodul curent in raport cu parintele sau
+            return (double)child.WinCount / child.VisitCount +
+                   Math.Sqrt(2 * Math.Log(parent.VisitCount) / child.VisitCount);
+        }
+
+        public static MCTSNode FindBestNodeWithUCT(MCTSNode node)
+        {
+            return node.Children.OrderByDescending(c => UCBValue(node, c)).FirstOrDefault();
+        }
+    }
 }
