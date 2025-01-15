@@ -9,92 +9,124 @@ namespace ProiectIA
 {
     public class MCTS 
     {
-        private GameState gameState;
+                private GameState gameState;
+        private int numberOfSimulations;
+        private Random random = new Random();
 
-        public MCTS(GameState state)
+        public MCTS(GameState state, int numberOfSimulations)
         {
             gameState = state;
+            this.numberOfSimulations = numberOfSimulations;
         }
 
         public string SelectBestQuestion()
         {
+            //Daca nu mai sunt intrebari disponibile return sir gol
             if (gameState.AvailableQuestions.Count == 0)
-                return string.Empty;
-
-            Dictionary<string, double> questionScores = new Dictionary<string, double>();
-
-            foreach (var question in gameState.AvailableQuestions)
             {
-                double score = 0;
-                var remainingCharactersIfYes = SimulateRemainingCharacters(question, true);
-                double probabilityYes = (double)remainingCharactersIfYes.Count / gameState.RemainingCharacters.Count;
-
-
-                var remainingCharactersIfNo = SimulateRemainingCharacters(question, false);
-                double probabilityNo = (double)remainingCharactersIfNo.Count / gameState.RemainingCharacters.Count;
-
-                score = (1 - probabilityYes) * remainingCharactersIfYes.Count +
-                        (1 - probabilityNo) * remainingCharactersIfNo.Count;
-
-                questionScores[question] = score;
+                return string.Empty; 
             }
 
+            // Creeaza nodul radacina al arborelui MCTS, folosind starea curenta a jocului
+            var node = new MCTSNode(gameState);
 
-            return questionScores.OrderByDescending(q => q.Value).First().Key;
+            // Se executa un nr specificat de simulari pentru a evalua intrebarile posibile
+            for (int i = 0; i < numberOfSimulations; i++)
+            {
+                // 1. Selectie
+                // Alege cel mai promitator nod din arbore pe baza functiei UCB
+                var promisingNode = SelectPromisingNode(node);
+
+                // 2. Expansiune
+                // Daca nodul promitator nu este un nod terminal (mai mult de un personaj) si mai are intrebari neutilizate,
+                // extindem arborele adaugand noduri noi pentru intrebarile neexplorate
+                if (promisingNode.GameState.remainingCharacters.Count > 1 && promisingNode.UntriedQuestions.Any())
+                {
+                    ExpandNode(promisingNode);
+                }
+
+                // 3. Simulare
+                // Selecteaza un nod pentru simulare: daca exista copii neexplorati, se alege primul; altfel, se foloseste nodul promitator
+                var nodeToRollout = promisingNode.Children.Any() ? promisingNode.Children.First(n => n.IsNotFullySimulated) : promisingNode;
+
+                // Daca nodul selectat pentru simulare este un nod terminal (de exemplu, un singur personaj ramas), continuare cu urmatoarea simulare
+                if (nodeToRollout.IsTerminalState) continue;
+                // Ruleaza o simulare (rollout) pentru a estima rezultatul (reward-ul) asociat acestui nod
+                var reward = Rollout(nodeToRollout.GameState);
+
+                // 4. Backpropagare
+                // Paropagarea rezultatului simularii (reward-ul) catre nodurile din arbore, incepand de la nodul curent
+                BackPropagate(nodeToRollout, reward);
+            }
+
+            // Dupa toate simularile, se alege copilul nodului radacina cu cea mai mare rata de castig (WinRate)
+            var bestChild = node.Children
+                .OrderByDescending(c => c.WinRate)
+                .FirstOrDefault();
+
+            // Se returneaza intrebarea asociata copilului selectat. Daca nu exista copii, return sir gol
+            return bestChild?.Question;
         }
 
-        private List<Character> SimulateRemainingCharacters(string question, bool answer)
+
+        private MCTSNode SelectPromisingNode(MCTSNode rootNode)
         {
-            var remainingCharacters = new List<Character>();
-
-            foreach (var character in gameState.RemainingCharacters)
+            MCTSNode currentNode = rootNode;
+            while (currentNode.Children.Any() && !currentNode.IsNotFullySimulated)
             {
-                if (answer)
-                {
-                    if (CharacterMatchesQuestion(character, question))
-                        remainingCharacters.Add(character);
-                }
-                else
-                {
-                    if (!CharacterMatchesQuestion(character, question))
-                        remainingCharacters.Add(character);
-                }
+                currentNode = UCT.FindBestNodeWithUCT(currentNode);
             }
-
-            return remainingCharacters;
+            return currentNode;
         }
 
-
-        private bool CharacterMatchesQuestion(Character character, string question)
+        private void ExpandNode(MCTSNode node)
         {
-            switch (question)
+            var question = node.UntriedQuestions.FirstOrDefault();
+            if (question != null)
             {
-                case "Personajul are par blond?":
-                    return character.HairColor == "Blond";
-                case "Personajul are par negru?":
-                    return character.HairColor == "Negru";
-                case "Personajul are par castaniu?":
-                    return character.HairColor == "Castaniu";
-                case "Personajul are barba sau mustata?":
-                    return character.HasBeardOrMustache;
-                case "Personajul este femeie?":
-                    return character.Gender == "F";
-                case "Personajul este barbat?":
-                    return character.Gender == "M";
-                case "Personajul are palarie?":
-                    return character.WearsHat;
-                case "Personajul este tanar?":
-                    return character.EstimatedAge == "Tanar";
-                case "Personajul este matur?":
-                    return character.EstimatedAge == "Matur";
-                case "Personajul este senior?":
-                    return character.EstimatedAge == "Senior";
-                case "Personajul poartă ochelari?":
-                    return character.HasGlasses;
-                default:
-                    return false;
+                node.UntriedQuestions.Remove(question);
+
+                // Simulate both possible answers to the question
+                GameState gameStateIfYes = new GameState(node.GameState.remainingCharacters.ToList(), node.GameState.AvailableQuestions.ToList());
+                gameStateIfYes.UpdateRemainingCharacters(question, true);
+                gameStateIfYes.RemoveQuestion(question);
+                node.AddChild(new MCTSNode(gameStateIfYes) { Parent = node, Question = question, Answer = true });
+
+                GameState gameStateIfNo = new GameState(node.GameState.remainingCharacters.ToList(), node.GameState.AvailableQuestions.ToList());
+                gameStateIfNo.UpdateRemainingCharacters(question, false);
+                gameStateIfNo.RemoveQuestion(question);
+                node.AddChild(new MCTSNode(gameStateIfNo) { Parent = node, Question = question, Answer = false });
             }
-        } 
+        }
+
+        private int Rollout(GameState currentGameState)
+        {
+            GameState rolloutState = new GameState(currentGameState.remainingCharacters.ToList(), currentGameState.AvailableQuestions.ToList());
+            Character computerCharacter = rolloutState.remainingCharacters.FirstOrDefault(); // Assume one character left if reached here due to expansion
+
+            if (computerCharacter == null) return 0; // Should not happen
+
+            while (rolloutState.remainingCharacters.Count > 1 && rolloutState.AvailableQuestions.Any())
+            {
+                string question = rolloutState.AvailableQuestions[random.Next(rolloutState.AvailableQuestions.Count)];
+                bool answer = computerCharacter.CharacterMatchesQuestion(question);
+                rolloutState.UpdateRemainingCharacters(question, answer);
+                rolloutState.RemoveQuestion(question);
+            }
+
+            return rolloutState.remainingCharacters.Count == 1 ? 1 : 0; // Reward 1 if the simulation leads to identifying the character
+        }
+
+        private void BackPropagate(MCTSNode nodeToPropagate, int reward)
+        {
+            MCTSNode tempNode = nodeToPropagate;
+            while (tempNode != null)
+            {
+                tempNode.VisitCount++;
+                tempNode.WinCount += reward;
+                tempNode = tempNode.Parent;
+            }
+        }
     }
 
     public class MCTSNode
