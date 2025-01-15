@@ -5,9 +5,9 @@
         private Character? playerTargetCharacter;
 
 
-        private GameState? gameStatePlayer; // Permite null
-        private GameState? gameStateComputer; // Permite null
-        private MCTS? mcts; // Variabila pentru instanta MCTS
+        private GameState? gameStatePlayer; 
+        private GameState? gameStateComputer; 
+        private MCTS? mcts;
         private bool isComputerTurn = false;
 
         private List<Character> characters = new List<Character>();
@@ -19,21 +19,17 @@
         {
             InitializeComponent();
 
-            // Conectează evenimentul CellClick la metoda dataGridView1_CellClick
             dataGridView1.CellClick += new DataGridViewCellEventHandler(dataGridView1_CellClick);
 
-            // Initializeaza starea jocului
             gameStatePlayer = new GameState(new List<Character>(), new List<string>());
             gameStateComputer = new GameState(new List<Character>(), new List<string>());
 
-            // Initializeaza Timer-ul pentru coada de status
             InitializeStatusTimer();
         }
 
 
         private void StartJocNou()
         {
-            // Lista de personaje
             characters = new List<Character>
             {
                 new Character("Alex", "M", "Negru", true, true, false, "Tanăr", "Images/alex.png"),
@@ -50,7 +46,6 @@
                 new Character("Sarah", "F", "Castaniu", false, false, false, "Tanar", "Images/sarah.png")
             };
 
-            // Lista de întrebari disponibile
             List<string> questions = new List<string>
             {
                 "Personajul are par blond?",
@@ -66,27 +61,20 @@
                 "Personajul poartă ochelari?",
             };
 
-            // Initializeaza gameState
             gameStatePlayer = new GameState(characters, questions);
             gameStateComputer = new GameState(characters, questions);
 
             Random random = new Random();
 
-            // Alege personajul calculatorului random
-
             gameStateComputer.SelectedCharacter = characters[random.Next(characters.Count)];
 
-            // Incarca personajele în grid
             LoadCharactersIntoGrid();
 
-            // Populateaza ComboBox
             UpdateComboBoxQuestions();
 
-            // Instantiaza MCTS
             mcts = new MCTS(gameStateComputer, (int)numericUpDown1.Value);
 
-            // Actualizează statusul
-            labelStatus.Text = "Selectați un personaj din grid pentru a începe jocul!";
+            labelStatus.Text = "Selectati un personaj din grid pentru a incepe jocul!";
             dataGridView1.Enabled = true;
             yesButton.Enabled = false;
             noButton.Enabled = false;
@@ -106,45 +94,38 @@
             if (statusQueue.Count > 0)
             {
                 string nextStatus = statusQueue.Dequeue();
-                labelStatus.Text = nextStatus; // Actualizeaza statusul pe ecran
+                labelStatus.Text = nextStatus;
             }
             else
             {
-                statusTimer.Stop(); // Opreste timer-ul daca coada este goală
-            }
-        }
-
-        private void AddToStatusQueue(string status)
-        {
-            statusQueue.Enqueue(status);
-            if (!statusTimer.Enabled)
-            {
-                statusTimer.Start();
+                statusTimer.Stop(); 
             }
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.RowIndex < characters.Count)
+            if (e.RowIndex >= 0 &&
+                e.RowIndex < gameStatePlayer?.remainingCharacters.Count) 
             {
-
-                playerTargetCharacter = characters[e.RowIndex];
-
+                playerTargetCharacter = gameStatePlayer.remainingCharacters[e.RowIndex];
+                gameStatePlayer.SelectedCharacter = playerTargetCharacter;
 
                 if (playerTargetCharacter != null && System.IO.File.Exists(playerTargetCharacter.ImagePath))
                 {
                     characterPictureBox.Image = Image.FromFile(playerTargetCharacter.ImagePath);
                 }
 
+                labelNumePersonaj.Text = playerTargetCharacter.Name;
+
+                labelStatus.Text =
+                    "Jucătorul uman și-a ales personajul! Calculatorul și-a ales personajul, jocul începe!";
 
 
-                labelStatus.Text = "Jucătorul uman și-a ales personajul! Calculatorul și-a ales personajul, jocul începe!";
-
-
-                AddToStatusQueue("Jucătorul uman trebuie să aleagă o întrebare.");
-
+                comboBoxIntrebari.Enabled = true;
 
                 dataGridView1.Enabled = false;
+
+                AddToStatusQueue("Este rândul tău să alegi o întrebare");
 
                 if (!statusTimer.Enabled)
                 {
@@ -153,83 +134,28 @@
             }
         }
 
-
-
-
-
-
-        private void ProcessQuestion(string question, bool answer)
+        private void ProcessQuestion(string question, bool answer, bool isPlayerQuestion)
         {
-            if (gameState == null || gameState.RemainingCharacters == null)
-                return;
-
-            var remaining = new List<Character>();
-
-            foreach (var character in gameState.RemainingCharacters)
+            if (!isComputerTurn && gameStatePlayer != null)
             {
-                if (answer)
-                {
-                    if (CharacterMatchesQuestion(character, question))
-                        remaining.Add(character);
-                }
-                else
-                {
-                    if (!CharacterMatchesQuestion(character, question))
-                        remaining.Add(character);
-                }
+                gameStatePlayer.UpdateRemainingCharacters(question, answer);
+                LoadCharactersIntoGrid();
             }
-
-            gameState.RemainingCharacters = remaining;
-
-
-            LoadCharactersIntoGrid();
-        }
-
-
-
-
-        private bool CharacterMatchesQuestion(Character character, string question)
-        {
-
-            switch (question)
+            else
             {
-                case "Personajul are par blond?":
-                    return character.HairColor == "Blond";
-                case "Personajul are par negru?":
-                    return character.HairColor == "Negru";
-                case "Personajul are par castaniu?":
-                    return character.HairColor == "Castaniu";
-                case "Personajul are barba sau mustata?":
-                    return character.HasBeardOrMustache;
-                case "Personajul este femeie?":
-                    return character.Gender == "F";
-                case "Personajul este barbat?":
-                    return character.Gender == "M";
-                case "Personajul are palarie?":
-                    return character.WearsHat;
-                case "Personajul este tanar?":
-                    return character.EstimatedAge == "Tanar";
-                case "Personajul este matur?":
-                    return character.EstimatedAge == "Matur";
-                case "Personajul este senior?":
-                    return character.EstimatedAge == "Senior";
-                case "Personajul poartă ochelari?":
-                    return character.HasGlasses;
-                default:
-                    return false;
+                if (gameStateComputer == null)
+                    return;
+                gameStateComputer.UpdateRemainingCharacters(question, answer);
             }
         }
-
-
 
         private void LoadCharactersIntoGrid()
         {
-            if (gameState == null) return;
+            if (gameStatePlayer == null) return;
 
             dataGridView1.Rows.Clear();
 
-
-            foreach (var character in gameState.RemainingCharacters)
+            foreach (var character in gameStatePlayer.remainingCharacters)
             {
                 dataGridView1.Rows.Add(character.Name, character.Gender, character.HairColor,
                     character.HasGlasses ? "Da" : "Nu",
@@ -242,7 +168,6 @@
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
             dataGridView1.Rows.Clear();
 
             characterPictureBox.Image = null;
@@ -254,76 +179,74 @@
         private bool GetPlayerResponse(string question)
         {
             if (playerTargetCharacter == null)
-                return false;
+                return false; 
 
-
-            return CharacterMatchesQuestion(playerTargetCharacter, question);
+            return playerTargetCharacter.CharacterMatchesQuestion(question);
         }
 
 
         private void EnableAnswerButtons(string question)
         {
-            labelStatus.Text = $"Calculatorul întreabă: {question}";
             yesButton.Tag = question;
-            noButton.Tag = question;
+            noButton.Tag = question; 
 
             yesButton.Enabled = true;
             noButton.Enabled = true;
+            comboBoxIntrebari.Enabled = false;
+
         }
 
 
         private void ComputerTurn()
         {
-            if (gameState == null || mcts == null || playerTargetCharacter == null) return;
+            if (gameStateComputer == null || mcts == null || gameStatePlayer.SelectedCharacter == null) return;
 
+            isComputerTurn = true;
 
             string bestQuestion = mcts.SelectBestQuestion();
-            labelStatus.Text = $"Calculatorul a ales întrebarea: {bestQuestion}";
 
-            EnableAnswerButtons(bestQuestion);
+            if (!string.IsNullOrEmpty(bestQuestion))
+            {
+                EnableAnswerButtons(bestQuestion);
+                gameStateComputer.RemoveQuestion(bestQuestion);
+                AddToStatusQueue($"Calculatorul intreaba: {bestQuestion}");
+            }
+            else
+            {
+                AddToStatusQueue("Calculatorul nu stie ce sa intrebe.");
+                EndComputerTurn(); 
+            }
         }
-
-
 
 
         private void ResetGame()
         {
-
             dataGridView1.Rows.Clear();
             comboBoxIntrebari.Items.Clear();
             characterPictureBox.Image = null;
 
+            labelNumePersonaj.Text = "";
 
-            playerTargetCharacter = null;
-            computerTargetCharacter = null;
-            gameState = null;
             mcts = null;
-
-
-            playerScore = 0;
-            computerScore = 0;
+            gameStatePlayer = null;
+            gameStatePlayer = null;
 
             labelStatus.Text = "Apasă 'Start Joc Nou' pentru a începe!";
+            comboBoxIntrebari.Enabled = false;
+            dataGridView1.Enabled = false;
         }
-
-
-
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-
         }
 
         private void dataGridView1_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
         {
-
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-
         }
-
 
         private bool CheckGameOver()
         {
